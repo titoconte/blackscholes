@@ -54,6 +54,11 @@ class BlackScholesBase(ABC, StandardNormalMixin):
         ...
 
     @abstractmethod
+    def find_implied_volatility(self) -> float:
+        """Calculates the implied volaticity."""
+        ...
+
+    @abstractmethod
     def delta(self) -> float:
         """Rate of change in option price
         with respect to the forward price (1st derivative).
@@ -97,7 +102,7 @@ class BlackScholesBase(ABC, StandardNormalMixin):
         """
         Rate of change in option price with respect to the volatility of the asset.
         """
-        return self.S * self._pdf(self._d1) * sqrt(self.T)
+        return self._vega
 
     @abstractmethod
     def theta(self) -> float:
@@ -276,6 +281,12 @@ class BlackScholesBase(ABC, StandardNormalMixin):
         """2nd probability parameter that acts as a multiplication factor for discounting."""
         return self._d1 - self.sigma * sqrt(self.T)
 
+    @property
+    def _vega(self) -> float:
+        """
+        Rate of change in option price with respect to the volatility of the asset.
+        """
+        return self.S * self._pdf(self._d1) * sqrt(self.T)
 
 class Black76Base(ABC, StandardNormalMixin):
     """
@@ -320,11 +331,16 @@ class Black76Base(ABC, StandardNormalMixin):
             / (self.F * self.sigma * sqrt(self.T))
         )
 
+    @abstractmethod
+    def find_implied_volatility(self) -> float:
+        """Calculates the implied volaticity."""
+        ...
+
     def vega(self) -> float:
         """Rate of change in option price with respect to the volatility
         of underlying futures contract.
         """
-        return self.F * exp(-self.r * self.T) * self._pdf(self._d1) * sqrt(self.T)
+        return self._vega
 
     @abstractmethod
     def theta(self) -> float:
@@ -396,6 +412,13 @@ class Black76Base(ABC, StandardNormalMixin):
     def _d2(self) -> float:
         """2nd probability parameter that acts as a multiplication factor for discounting."""
         return self._d1 - self.sigma * sqrt(self.T)
+
+    @property
+    def _vega(self) -> float:
+        """Rate of change in option price with respect to the volatility
+        of underlying futures contract.
+        """
+        return self.F * exp(-self.r * self.T) * self._pdf(self._d1) * sqrt(self.T)
 
 
 class BlackScholesStructureBase(ABC):
